@@ -1,0 +1,25 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  equivalence:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: 0x7ff/kextract
+          ref: 7ffffffdd0f857ea1af9a9bead18c0efe4af62c4
+          path: _reference
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: make
+      - run: python3 checks/kernelcabinet_structure.py --reference _reference/kextract.c
+      - run: python3 checks/kernelcabinet_equivalence.py --reference _reference/kextract.c
+      - run: make install DESTDIR="$RUNNER_TEMP/consumer" PREFIX=/usr/local

@@ -1,0 +1,447 @@
+{
+  "project": "KernelCabinet",
+  "source_commit": "7ffffffdd0f857ea1af9a9bead18c0efe4af62c4",
+  "definitions": [
+    {
+      "identity": "0x79ef65ee0",
+      "kind": "FieldDecl",
+      "old": "next_addr",
+      "new": "kc_binding_001",
+      "location": {
+        "offset": 321,
+        "line": 15,
+        "col": 11,
+        "tokLen": 9
+      }
+    },
+    {
+      "identity": "0x79ef65f40",
+      "kind": "FieldDecl",
+      "old": "info_version",
+      "new": "kc_binding_002",
+      "location": {
+        "offset": 342,
+        "line": 16,
+        "col": 11,
+        "tokLen": 12
+      }
+    },
+    {
+      "identity": "0x79ef65fa0",
+      "kind": "FieldDecl",
+      "old": "id",
+      "new": "kc_binding_003",
+      "location": {
+        "offset": 366,
+        "line": 17,
+        "col": 11,
+        "tokLen": 2
+      }
+    },
+    {
+      "identity": "0x79ef68080",
+      "kind": "FieldDecl",
+      "old": "name",
+      "new": "kc_binding_004",
+      "location": {
+        "offset": 380,
+        "line": 18,
+        "col": 11,
+        "tokLen": 4
+      }
+    },
+    {
+      "identity": "0x79ef68150",
+      "kind": "FieldDecl",
+      "old": "version",
+      "new": "kc_binding_005",
+      "location": {
+        "offset": 411,
+        "line": 19,
+        "col": 11,
+        "tokLen": 7
+      }
+    },
+    {
+      "identity": "0x79ef681f8",
+      "kind": "TypedefDecl",
+      "old": "partial_kmod_info_64_t",
+      "new": "kc_binding_006",
+      "location": {
+        "offset": 437,
+        "line": 20,
+        "col": 3,
+        "tokLen": 22
+      }
+    },
+    {
+      "identity": "0x79ef68568",
+      "kind": "FunctionDecl",
+      "old": "find_segment",
+      "new": "kc_locate_region",
+      "location": {
+        "offset": 545,
+        "line": 24,
+        "col": 1,
+        "tokLen": 12
+      }
+    },
+    {
+      "identity": "0x79ef68328",
+      "kind": "ParmVarDecl",
+      "old": "mhp",
+      "new": "kc_binding_008",
+      "location": {
+        "offset": 581,
+        "line": 24,
+        "col": 37,
+        "tokLen": 3
+      }
+    },
+    {
+      "identity": "0x79ef683a8",
+      "kind": "ParmVarDecl",
+      "old": "seg_name",
+      "new": "kc_binding_009",
+      "location": {
+        "offset": 598,
+        "col": 54,
+        "tokLen": 8
+      }
+    },
+    {
+      "identity": "0x79ef68648",
+      "kind": "VarDecl",
+      "old": "sgp",
+      "new": "kc_binding_010",
+      "location": {
+        "offset": 638,
+        "col": 29,
+        "tokLen": 3
+      }
+    },
+    {
+      "identity": "0x79ef68918",
+      "kind": "VarDecl",
+      "old": "i",
+      "new": "kc_binding_011",
+      "location": {
+        "offset": 716,
+        "col": 11,
+        "tokLen": 1
+      }
+    },
+    {
+      "identity": "0x79ef69498",
+      "kind": "FunctionDecl",
+      "old": "find_section",
+      "new": "kc_locate_section",
+      "location": {
+        "offset": 984,
+        "line": 38,
+        "col": 1,
+        "tokLen": 12
+      }
+    },
+    {
+      "identity": "0x79ef69258",
+      "kind": "ParmVarDecl",
+      "old": "sgp",
+      "new": "kc_binding_013",
+      "location": {
+        "offset": 1024,
+        "line": 38,
+        "col": 41,
+        "tokLen": 3
+      }
+    },
+    {
+      "identity": "0x79ef692d8",
+      "kind": "ParmVarDecl",
+      "old": "sect_name",
+      "new": "kc_binding_014",
+      "location": {
+        "offset": 1041,
+        "col": 58,
+        "tokLen": 9
+      }
+    },
+    {
+      "identity": "0x79ef69578",
+      "kind": "VarDecl",
+      "old": "sp",
+      "new": "kc_binding_015",
+      "location": {
+        "offset": 1074,
+        "col": 21,
+        "tokLen": 2
+      }
+    },
+    {
+      "identity": "0x79ef69860",
+      "kind": "VarDecl",
+      "old": "i",
+      "new": "kc_binding_016",
+      "location": {
+        "offset": 1143,
+        "col": 11,
+        "tokLen": 1
+      }
+    },
+    {
+      "identity": "0x79ef6a280",
+      "kind": "FunctionDecl",
+      "old": "kextract",
+      "new": "kc_export_extensions",
+      "location": {
+        "offset": 1366,
+        "line": 52,
+        "col": 1,
+        "tokLen": 8
+      }
+    },
+    {
+      "identity": "0x79ef6a170",
+      "kind": "ParmVarDecl",
+      "old": "mhp",
+      "new": "kc_binding_018",
+      "location": {
+        "offset": 1398,
+        "line": 52,
+        "col": 33,
+        "tokLen": 3
+      }
+    },
+    {
+      "identity": "0x79ef6a358",
+      "kind": "VarDecl",
+      "old": "text",
+      "new": "kc_binding_019",
+      "location": {
+        "offset": 1433,
+        "col": 29,
+        "tokLen": 4
+      }
+    },
+    {
+      "identity": "0x79ef6a3e8",
+      "kind": "VarDecl",
+      "old": "prelink_info",
+      "new": "kc_binding_020",
+      "location": {
+        "offset": 1440,
+        "col": 36,
+        "tokLen": 12
+      }
+    },
+    {
+      "identity": "0x79ef6a478",
+      "kind": "VarDecl",
+      "old": "kext_text_exec",
+      "new": "kc_binding_021",
+      "location": {
+        "offset": 1455,
+        "col": 51,
+        "tokLen": 14
+      }
+    },
+    {
+      "identity": "0x79ef6a540",
+      "kind": "VarDecl",
+      "old": "kmod_start",
+      "new": "kc_binding_022",
+      "location": {
+        "offset": 1491,
+        "col": 21,
+        "tokLen": 10
+      }
+    },
+    {
+      "identity": "0x79ef6a5d0",
+      "kind": "VarDecl",
+      "old": "kmod_info",
+      "new": "kc_binding_023",
+      "location": {
+        "offset": 1504,
+        "col": 34,
+        "tokLen": 9
+      }
+    },
+    {
+      "identity": "0x79ef6a660",
+      "kind": "VarDecl",
+      "old": "kext_text",
+      "new": "kc_binding_024",
+      "location": {
+        "offset": 1516,
+        "col": 46,
+        "tokLen": 9
+      }
+    },
+    {
+      "identity": "0x79ef6a748",
+      "kind": "VarDecl",
+      "old": "kext_table",
+      "new": "kc_binding_025",
+      "location": {
+        "offset": 1538,
+        "col": 12,
+        "tokLen": 10
+      }
+    },
+    {
+      "identity": "0x79ef6a7c8",
+      "kind": "VarDecl",
+      "old": "info_table",
+      "new": "kc_binding_026",
+      "location": {
+        "offset": 1551,
+        "col": 25,
+        "tokLen": 10
+      }
+    },
+    {
+      "identity": "0x79ef6a938",
+      "kind": "VarDecl",
+      "old": "kmod",
+      "new": "kc_binding_027",
+      "location": {
+        "offset": 1588,
+        "col": 26,
+        "tokLen": 4
+      }
+    },
+    {
+      "identity": "0x79ef6a9e0",
+      "kind": "VarDecl",
+      "old": "kext",
+      "new": "kc_binding_028",
+      "location": {
+        "offset": 1618,
+        "col": 25,
+        "tokLen": 4
+      }
+    },
+    {
+      "identity": "0x79ef6aa70",
+      "kind": "VarDecl",
+      "old": "i",
+      "new": "kc_binding_029",
+      "location": {
+        "offset": 1632,
+        "col": 9,
+        "tokLen": 1
+      }
+    },
+    {
+      "identity": "0x79ef6aae8",
+      "kind": "VarDecl",
+      "old": "n_kmod",
+      "new": "kc_binding_030",
+      "location": {
+        "offset": 1635,
+        "col": 12,
+        "tokLen": 6
+      }
+    },
+    {
+      "identity": "0x79ef6ab98",
+      "kind": "VarDecl",
+      "old": "fd",
+      "new": "kc_binding_031",
+      "location": {
+        "offset": 1648,
+        "col": 6,
+        "tokLen": 2
+      }
+    },
+    {
+      "identity": "0x79ef6e650",
+      "kind": "ParmVarDecl",
+      "old": "argc",
+      "new": "kc_binding_032",
+      "location": {
+        "offset": 3529,
+        "line": 101,
+        "col": 10,
+        "tokLen": 4
+      }
+    },
+    {
+      "identity": "0x79ef6e708",
+      "kind": "ParmVarDecl",
+      "old": "argv",
+      "new": "kc_binding_033",
+      "location": {
+        "offset": 3548,
+        "col": 29,
+        "tokLen": 4
+      }
+    },
+    {
+      "identity": "0x79ef6eaf8",
+      "kind": "VarDecl",
+      "old": "fd",
+      "new": "kc_binding_034",
+      "location": {
+        "offset": 3630,
+        "col": 7,
+        "tokLen": 2
+      }
+    },
+    {
+      "identity": "0x79ef6eca8",
+      "kind": "VarDecl",
+      "old": "len",
+      "new": "kc_binding_035",
+      "location": {
+        "offset": 3669,
+        "col": 10,
+        "tokLen": 3
+      }
+    },
+    {
+      "identity": "0x79ef6eef0",
+      "kind": "VarDecl",
+      "old": "mhp",
+      "new": "kc_binding_036",
+      "location": {
+        "offset": 3732,
+        "col": 26,
+        "tokLen": 3
+      }
+    }
+  ],
+  "macro_names": {
+    "partial_kmod_info_64_t": "kc_binding_006",
+    "MIN": "KC_RULE_01",
+    "UNTAG_PTR": "KC_RULE_02",
+    "KMOD_MAX_NAME": "KC_RULE_03"
+  },
+  "macro_parameters": [
+    {
+      "a": "kc_macro_value_1",
+      "b": "kc_macro_value_2"
+    },
+    {
+      "a": "kc_macro_value_1"
+    }
+  ],
+  "token_replacements": 179,
+  "source_file_mapping": {
+    "kextract.c": [
+      "Sources/kc_image_layout.h",
+      "Sources/kc_container_walk.c",
+      "Sources/kc_export_flow.c",
+      "Sources/kc_bootstrap.c"
+    ]
+  },
+  "compatibility_exceptions": [
+    "main",
+    "C standard/system APIs",
+    "Mach-O external layout fields",
+    "format strings and segment/section names",
+    "Makefile and license metadata"
+  ],
+  "reference_source_sha256": "f8f000b2ffffda520985642157d38f3636e9400ccb791b269601296495c4fd44"
+}
