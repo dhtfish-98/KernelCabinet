@@ -1,33 +1,31 @@
 #ifndef KC_IMAGE_LAYOUT_H
 #define KC_IMAGE_LAYOUT_H
-
+/* Format derives from kextract; see ORIGIN.md and LICENSE.
+ * Bounded parsing and output policy rewritten in October 2026. */
+#include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
 #include <mach-o/loader.h>
+#include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <sys/mman.h>
+#include <sys/stat.h>
 #include <unistd.h>
-
-#define KC_RULE_01(kc_macro_value_1, kc_macro_value_2) ((kc_macro_value_1) < (kc_macro_value_2) ? (kc_macro_value_1) : (kc_macro_value_2))
-#define KC_RULE_02(kc_macro_value_1) ((kc_macro_value_1) | UINT64_C(0xffff000000000000))
-#define KC_RULE_03 (64)
-
-#pragma pack(4)
+#define KC_MAX_IMAGE_BYTES (UINT64_C(1024) * 1024 * 1024)
+#define KC_NORMALIZE_ADDRESS(value) ((value) | UINT64_C(0xffff000000000000))
+#pragma pack(push, 4)
 typedef struct {
-	uint64_t kc_binding_001;
-	int32_t  kc_binding_002;
-	uint32_t kc_binding_003;
-	char     kc_binding_004[KC_RULE_03];
-	char     kc_binding_005[KC_RULE_03];
-} kc_binding_006; /* From xnu/osfmk/mach/kmod.h */
-#pragma pack()
-
-struct segment_command_64 *
-kc_locate_region(struct mach_header_64 *kc_binding_008, const char *kc_binding_009);
-struct section_64 *
-kc_locate_section(struct segment_command_64 *kc_binding_013, const char *kc_binding_014);
-void
-kc_export_extensions(struct mach_header_64 *kc_binding_018);
-
+    uint64_t next;
+    int32_t info_version;
+    uint32_t id;
+    char name[64];
+    char version[64];
+} kc_module_record;
+#pragma pack(pop)
+typedef struct { const unsigned char *bytes; size_t size; } kc_image;
+bool kc_contains(const kc_image *image, uint64_t offset, uint64_t length);
+const struct segment_command_64 *kc_locate_region(const kc_image *image, uint64_t header_offset, const char *name);
+const struct section_64 *kc_locate_section(const struct segment_command_64 *segment, const char *name);
+int kc_export_extensions(const kc_image *image);
 #endif

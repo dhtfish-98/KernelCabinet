@@ -1,50 +1,88 @@
 #include "kc_image_layout.h"
-
-void
-kc_export_extensions(struct mach_header_64 *kc_binding_018) {
-	struct segment_command_64 *kc_binding_019, *kc_binding_020, *kc_binding_021;
-	struct section_64 *kc_binding_022, *kc_binding_023, *kc_binding_024;
-	uint64_t *kc_binding_025, *kc_binding_026;
-	kc_binding_006 *kc_binding_027;
-	struct mach_header_64 *kc_binding_028;
-	size_t kc_binding_029, kc_binding_030;
-	int kc_binding_031;
-	
-	if((kc_binding_019 = kc_locate_region(kc_binding_018, "__TEXT"))) {
-		if((kc_binding_020 = kc_locate_region(kc_binding_018, "__PRELINK_INFO"))) {
-			if((kc_binding_022 = kc_locate_section(kc_binding_020, "__kmod_start"))) {
-				if((kc_binding_023 = kc_locate_section(kc_binding_020, "__kmod_info"))) {
-					kc_binding_025 = (uint64_t *)((uintptr_t)kc_binding_018 + kc_binding_022->offset);
-					kc_binding_026 = (uint64_t *)((uintptr_t)kc_binding_018 + kc_binding_023->offset);
-					kc_binding_030 = KC_RULE_01(kc_binding_023->size, kc_binding_022->size) / sizeof(uint64_t);
-					for(kc_binding_029 = 0; kc_binding_029 < kc_binding_030; ++kc_binding_029) {
-						kc_binding_028 = (struct mach_header_64 *)((uintptr_t)kc_binding_018 + KC_RULE_02(kc_binding_025[kc_binding_029]) - kc_binding_019->vmaddr);
-						if((kc_binding_021 = kc_locate_region(kc_binding_028, "__TEXT_EXEC"))) {
-							kc_binding_027 = (kc_binding_006 *)((uintptr_t)kc_binding_018 + KC_RULE_02(kc_binding_026[kc_binding_029]) - kc_binding_019->vmaddr);
-							printf("index: %zu, name: %s, version: %s, vmaddr: 0x%016" PRIx64 "\n", kc_binding_029, kc_binding_027->kc_binding_004, kc_binding_027->kc_binding_005, KC_RULE_02(kc_binding_021->vmaddr));
-						}
-					}
-					printf("Select index to extract: ");
-					if(scanf("%zu", &kc_binding_029) == 1 && kc_binding_029 < kc_binding_030) {
-						kc_binding_027 = (kc_binding_006 *)((uintptr_t)kc_binding_018 + KC_RULE_02(kc_binding_026[kc_binding_029]) - kc_binding_019->vmaddr);
-						if((kc_binding_031 = open(kc_binding_027->kc_binding_004, O_TRUNC | O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) != -1) {
-							kc_binding_028 = (struct mach_header_64 *)((uintptr_t)kc_binding_018 + KC_RULE_02(kc_binding_025[kc_binding_029]) - kc_binding_019->vmaddr);
-							if((kc_binding_021 = kc_locate_region(kc_binding_028, "__TEXT_EXEC"))) {
-								if((kc_binding_024 = kc_locate_section(kc_binding_021, "__text"))) {
-									kc_binding_021->vmaddr = KC_RULE_02(kc_binding_021->vmaddr);
-									kc_binding_024->addr = KC_RULE_02(kc_binding_024->addr);
-									if(write(kc_binding_031, (const void *)((uintptr_t)kc_binding_028 + kc_binding_021->fileoff), kc_binding_021->filesize) != -1) {
-										printf("Wrote kext to file: %s\n", kc_binding_027->kc_binding_004);
-									}
-								}
-							}
-							close(kc_binding_031);
-						}
-					} else {
-						puts("Invalid index");
-					}
-				}
-			}
-		}
-	}
+static void kc_print_label(const char *label) {
+    for (size_t index = 0; index < 64 && label[index]; ++index) {
+        unsigned char byte = (unsigned char)label[index];
+        if (byte < 32 || byte > 126 || byte == '\\') printf("\\x%02x", byte);
+        else putchar(byte);
+    }
+}
+static bool kc_address_offset(const kc_image *image, uint64_t base, uint64_t address, uint64_t length, uint64_t *offset) {
+    address = KC_NORMALIZE_ADDRESS(address);
+    if (address < base) return false;
+    *offset = address - base;
+    return kc_contains(image, *offset, length);
+}
+static bool kc_record_at(const kc_image *image, uint64_t base, uint64_t address, const kc_module_record **record) {
+    uint64_t offset;
+    if (!kc_address_offset(image, base, address, sizeof(**record), &offset) || offset % 4) return false;
+    *record = (const void *)(image->bytes + offset);
+    return memchr((*record)->name, 0, sizeof((*record)->name)) && memchr((*record)->version, 0, sizeof((*record)->version));
+}
+static bool kc_extension_at(const kc_image *image, uint64_t base, uint64_t address,
+                            const struct segment_command_64 **segment, uint64_t *header_offset, uint64_t *data_offset) {
+    if (!kc_address_offset(image, base, address, sizeof(struct mach_header_64), header_offset)) return false;
+    *segment = kc_locate_region(image, *header_offset, "__TEXT_EXEC");
+    if (!*segment || (*segment)->fileoff > image->size - *header_offset) return false;
+    *data_offset = *header_offset + (*segment)->fileoff;
+    return kc_contains(image, *data_offset, (*segment)->filesize);
+}
+static int kc_write_new_file(const char *name, const unsigned char *bytes, size_t length) {
+    int output = open(name, O_WRONLY | O_CREAT | O_EXCL | O_NOFOLLOW | O_CLOEXEC, 0600);
+    if (output < 0) { perror("output (must not already exist)"); return 1; }
+    size_t position = 0;
+    while (position < length) {
+        ssize_t count = write(output, bytes + position, length - position);
+        if (count < 0 && errno == EINTR) continue;
+        if (count <= 0) { perror("output write (incomplete file retained)"); close(output); return 1; }
+        position += (size_t)count;
+    }
+    if (close(output)) { perror("output close"); return 1; }
+    printf("Wrote raw __TEXT_EXEC bytes to: %s\n", name);
+    return 0;
+}
+int kc_export_extensions(const kc_image *image) {
+    const struct segment_command_64 *text = kc_locate_region(image, 0, "__TEXT");
+    const struct segment_command_64 *info = kc_locate_region(image, 0, "__PRELINK_INFO");
+    if (!text || !info || text->fileoff != 0) goto invalid;
+    const struct section_64 *starts = kc_locate_section(info, "__kmod_start");
+    const struct section_64 *records = kc_locate_section(info, "__kmod_info");
+    if (!starts || !records || starts->size != records->size || !starts->size || starts->size % sizeof(uint64_t) ||
+        starts->offset % 8 || records->offset % 8 || !kc_contains(image, starts->offset, starts->size) ||
+        !kc_contains(image, records->offset, records->size)) goto invalid;
+    const uint64_t *start_values = (const void *)(image->bytes + starts->offset);
+    const uint64_t *record_values = (const void *)(image->bytes + records->offset);
+    size_t count = starts->size / sizeof(uint64_t);
+    if (count > 4096) goto invalid;
+    for (size_t index = 0; index < count; ++index) {
+        const kc_module_record *record;
+        const struct segment_command_64 *segment;
+        uint64_t header_offset, data_offset;
+        if (!kc_record_at(image, text->vmaddr, record_values[index], &record) ||
+            !kc_extension_at(image, text->vmaddr, start_values[index], &segment, &header_offset, &data_offset)) goto invalid;
+        printf("index: %zu, name: ", index);
+        kc_print_label(record->name);
+        printf(", version: ");
+        kc_print_label(record->version);
+        printf(", vmaddr: 0x%016" PRIx64 "\n", KC_NORMALIZE_ADDRESS(segment->vmaddr));
+    }
+    printf("Select index to extract: ");
+    char line[80];
+    if (!fgets(line, sizeof(line), stdin) || (!strchr(line, '\n') && !feof(stdin))) goto invalid;
+    char *start = line + strspn(line, " \t");
+    if (*start < '0' || *start > '9') goto invalid;
+    char *end;
+    errno = 0;
+    uintmax_t chosen = strtoumax(start, &end, 10);
+    end += strspn(end, " \t\r\n");
+    if (errno || *end || chosen >= count) goto invalid;
+    size_t selection = (size_t)chosen;
+    const struct segment_command_64 *segment;
+    uint64_t header_offset, data_offset;
+    if (!kc_extension_at(image, text->vmaddr, start_values[selection], &segment, &header_offset, &data_offset)) goto invalid;
+    char filename[80];
+    snprintf(filename, sizeof(filename), "kernelcabinet-index-%zu.bin", selection);
+    return kc_write_new_file(filename, image->bytes + data_offset, (size_t)segment->filesize);
+invalid:
+    fprintf(stderr, "Unsupported or malformed kernel image, metadata, or selection.\n");
+    return 2;
 }

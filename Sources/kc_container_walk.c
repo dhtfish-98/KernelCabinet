@@ -1,29 +1,35 @@
 #include "kc_image_layout.h"
-
-struct segment_command_64 *
-kc_locate_region(struct mach_header_64 *kc_binding_008, const char *kc_binding_009) {
-	struct segment_command_64 *kc_binding_010 = (struct segment_command_64 *)((uintptr_t)kc_binding_008 + sizeof(*kc_binding_008));
-	uint32_t kc_binding_011;
-	
-	for(kc_binding_011 = 0; kc_binding_011 < kc_binding_008->ncmds; ++kc_binding_011) {
-		if(kc_binding_010->cmd == LC_SEGMENT_64 && !strncmp(kc_binding_010->segname, kc_binding_009, sizeof(kc_binding_010->segname))) {
-			return kc_binding_010;
-		}
-		kc_binding_010 = (struct segment_command_64 *)((uintptr_t)kc_binding_010 + kc_binding_010->cmdsize);
-	}
-	return NULL;
+bool kc_contains(const kc_image *image, uint64_t offset, uint64_t length) {
+    return offset <= image->size && length <= image->size - offset;
 }
-
-struct section_64 *
-kc_locate_section(struct segment_command_64 *kc_binding_013, const char *kc_binding_014) {
-	struct section_64 *kc_binding_015 = (struct section_64 *)((uintptr_t)kc_binding_013 + sizeof(*kc_binding_013));
-	uint32_t kc_binding_016;
-	
-	for(kc_binding_016 = 0; kc_binding_016 < kc_binding_013->nsects; ++kc_binding_016) {
-		if(!strncmp(kc_binding_015->segname, kc_binding_013->segname, sizeof(kc_binding_015->segname)) && !strncmp(kc_binding_015->sectname, kc_binding_014, sizeof(kc_binding_015->sectname))) {
-			return kc_binding_015;
-		}
-		++kc_binding_015;
-	}
-	return NULL;
+const struct segment_command_64 *kc_locate_region(const kc_image *image, uint64_t header_offset, const char *name) {
+    if (header_offset % 8 || !kc_contains(image, header_offset, sizeof(struct mach_header_64))) return NULL;
+    const struct mach_header_64 *header = (const void *)(image->bytes + header_offset);
+    if (header->magic != MH_MAGIC_64 || header->cputype != CPU_TYPE_ARM64) return NULL;
+    uint64_t position = header_offset + sizeof(*header);
+    if (!kc_contains(image, position, header->sizeofcmds) || header->ncmds > header->sizeofcmds / sizeof(struct load_command)) return NULL;
+    const uint64_t end = position + header->sizeofcmds;
+    const struct segment_command_64 *found = NULL;
+    for (uint32_t index = 0; index < header->ncmds; ++index) {
+        if (position > end || end - position < sizeof(struct load_command)) return NULL;
+        const struct load_command *command = (const void *)(image->bytes + position);
+        if (command->cmdsize < sizeof(*command) || command->cmdsize % 8 || command->cmdsize > end - position) return NULL;
+        if (command->cmd == LC_SEGMENT_64) {
+            if (command->cmdsize < sizeof(struct segment_command_64)) return NULL;
+            const struct segment_command_64 *segment = (const void *)command;
+            if (segment->nsects > (command->cmdsize - sizeof(*segment)) / sizeof(struct section_64)) return NULL;
+            if (!strncmp(segment->segname, name, sizeof(segment->segname))) found = segment;
+        }
+        position += command->cmdsize;
+    }
+    return position == end ? found : NULL;
+}
+/* Only segments returned by kc_locate_region may be passed here. */
+const struct section_64 *kc_locate_section(const struct segment_command_64 *segment, const char *name) {
+    const struct section_64 *sections = (const void *)(segment + 1);
+    for (uint32_t index = 0; index < segment->nsects; ++index) {
+        if (!strncmp(sections[index].segname, segment->segname, sizeof(segment->segname)) &&
+            !strncmp(sections[index].sectname, name, sizeof(sections[index].sectname))) return sections + index;
+    }
+    return NULL;
 }
