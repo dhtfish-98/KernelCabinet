@@ -1,8 +1,10 @@
+> 目录已整理：文档在「项目文档」，构建、缓存与暂存输入在「Build」。从仓库根目录运行 `python3 构建.py --build`；如需使用本文原有源码命令，先运行 `python3 构建.py --stage --ci`，再进入 `Build/源码`。暂存会恢复原输入路径。现有版本和历史验证记录按各自提交理解。
+
 # KernelCabinet
 
-防御用途、实际能力及验证范围见 [DEFENSIVE_SCOPE.md](DEFENSIVE_SCOPE.md)。
+防御用途、实际能力及验证范围见 [DEFENSIVE_SCOPE.md](<DEFENSIVE_SCOPE.md>)。
 
-KernelCabinet locates embedded extension metadata in compatible, authorized ARM64 Mach-O kernel images and copies selected raw `__TEXT_EXEC` bytes for static analysis. Source lineage and GPL terms remain in [ORIGIN.md](ORIGIN.md) and LICENSE.
+KernelCabinet locates embedded extension metadata in compatible, authorized ARM64 Mach-O kernel images and copies selected raw `__TEXT_EXEC` bytes for static analysis. Source lineage and GPL terms remain in [ORIGIN.md](<ORIGIN.md>) and LICENSE.
 
 ## Build and use
 
@@ -24,4 +26,4 @@ The October 2026 defensive rewrite replaces the inherited unbounded mapping/trav
 
 ## Verification
 
-`checks/kernelcabinet_safety.py` compiles this source with ASan/UBSan and runs 138 owned process cases, including valid extraction, truncated files, corrupt commands/tables/addresses, unterminated names, special files, output collisions, symlinks and escaped metadata. The historical structure/equivalence scripts remain for provenance, and are not current acceptance gates. See [VALIDATION.md](VALIDATION.md).
+`checks/kernelcabinet_safety.py` compiles this source with ASan/UBSan and runs 138 owned process cases, including valid extraction, truncated files, corrupt commands/tables/addresses, unterminated names, special files, output collisions, symlinks and escaped metadata. The historical structure/equivalence scripts remain for provenance, and are not current acceptance gates. See [VALIDATION.md](<VALIDATION.md>).
