@@ -1,6 +1,12 @@
 # Validation
 
-## Current defensive rewrite — 2026-10-02
+## Current maintenance — 2026-10-04
+
+- This revision, based on the public HEAD, rejects a selection line containing an embedded NUL before EOF. The new process case returned success and created output on the preceding public implementation; it now returns failure without an output file.
+- One shared budget limits the total number of declared Mach-O load commands traversed across the root and embedded headers. Seven constrained-budget process cases distinguish failure during the second root scan, each of two embedded scans, and selection re-scan from successful complete extraction. These seven cases are not sanitizer builds; they check the accounting logic without allocating a large kernel image. The default one-million-command threshold has no real-kernel compatibility corpus yet; legitimate larger images may be rejected.
+- The full current safety suite passes 139 ASan/UBSan process cases plus seven constrained-budget process cases. Both valid and rejected input files remain byte-for-byte unchanged; outputs are created only for valid selections. This verifies owned synthetic fixtures, not a live kernel or every layout.
+
+## Defensive rewrite baseline — 2026-10-02
 
 - Current sources compile with Clang using `-Wall -Wextra -pedantic -std=c99`.
 - `python3 checks/kernelcabinet_safety.py` passes 138 process cases under AddressSanitizer and UndefinedBehaviorSanitizer. The fixture matrix includes supported raw extraction, bounds/command/record failures, read-only input preservation, special files, exclusive output creation, symlinks, metadata control characters and repeated structural mutations.

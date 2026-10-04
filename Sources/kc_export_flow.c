@@ -19,9 +19,10 @@ static bool kc_record_at(const kc_image *image, uint64_t base, uint64_t address,
     return memchr((*record)->name, 0, sizeof((*record)->name)) && memchr((*record)->version, 0, sizeof((*record)->version));
 }
 static bool kc_extension_at(const kc_image *image, uint64_t base, uint64_t address,
-                            const struct segment_command_64 **segment, uint64_t *header_offset, uint64_t *data_offset) {
+                            const struct segment_command_64 **segment, uint64_t *header_offset, uint64_t *data_offset,
+                            uint64_t *remaining_commands) {
     if (!kc_address_offset(image, base, address, sizeof(struct mach_header_64), header_offset)) return false;
-    *segment = kc_locate_region(image, *header_offset, "__TEXT_EXEC");
+    *segment = kc_locate_region_limited(image, *header_offset, "__TEXT_EXEC", remaining_commands);
     if (!*segment || (*segment)->fileoff > image->size - *header_offset) return false;
     *data_offset = *header_offset + (*segment)->fileoff;
     return kc_contains(image, *data_offset, (*segment)->filesize);
@@ -41,8 +42,9 @@ static int kc_write_new_file(const char *name, const unsigned char *bytes, size_
     return 0;
 }
 int kc_export_extensions(const kc_image *image) {
-    const struct segment_command_64 *text = kc_locate_region(image, 0, "__TEXT");
-    const struct segment_command_64 *info = kc_locate_region(image, 0, "__PRELINK_INFO");
+    uint64_t remaining_commands = KC_MAX_AGGREGATE_COMMANDS;
+    const struct segment_command_64 *text = kc_locate_region_limited(image, 0, "__TEXT", &remaining_commands);
+    const struct segment_command_64 *info = kc_locate_region_limited(image, 0, "__PRELINK_INFO", &remaining_commands);
     if (!text || !info || text->fileoff != 0) goto invalid;
     const struct section_64 *starts = kc_locate_section(info, "__kmod_start");
     const struct section_64 *records = kc_locate_section(info, "__kmod_info");
@@ -58,7 +60,8 @@ int kc_export_extensions(const kc_image *image) {
         const struct segment_command_64 *segment;
         uint64_t header_offset, data_offset;
         if (!kc_record_at(image, text->vmaddr, record_values[index], &record) ||
-            !kc_extension_at(image, text->vmaddr, start_values[index], &segment, &header_offset, &data_offset)) goto invalid;
+            !kc_extension_at(image, text->vmaddr, start_values[index], &segment, &header_offset, &data_offset,
+                             &remaining_commands)) goto invalid;
         printf("index: %zu, name: ", index);
         kc_print_label(record->name);
         printf(", version: ");
@@ -67,7 +70,14 @@ int kc_export_extensions(const kc_image *image) {
     }
     printf("Select index to extract: ");
     char line[80];
-    if (!fgets(line, sizeof(line), stdin) || (!strchr(line, '\n') && !feof(stdin))) goto invalid;
+    size_t line_length = 0;
+    int next;
+    while ((next = getchar()) != '\n' && next != EOF) {
+        if (next == '\0' || line_length >= sizeof(line) - 1) goto invalid;
+        line[line_length++] = (char)next;
+    }
+    if (ferror(stdin)) goto invalid;
+    line[line_length] = '\0';
     char *start = line + strspn(line, " \t");
     if (*start < '0' || *start > '9') goto invalid;
     char *end;
@@ -78,7 +88,8 @@ int kc_export_extensions(const kc_image *image) {
     size_t selection = (size_t)chosen;
     const struct segment_command_64 *segment;
     uint64_t header_offset, data_offset;
-    if (!kc_extension_at(image, text->vmaddr, start_values[selection], &segment, &header_offset, &data_offset)) goto invalid;
+    if (!kc_extension_at(image, text->vmaddr, start_values[selection], &segment, &header_offset, &data_offset,
+                         &remaining_commands)) goto invalid;
     char filename[80];
     snprintf(filename, sizeof(filename), "kernelcabinet-index-%zu.bin", selection);
     return kc_write_new_file(filename, image->bytes + data_offset, (size_t)segment->filesize);

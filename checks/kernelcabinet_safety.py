@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def main():
     tested = 0
+    budget_tested = 0
     with tempfile.TemporaryDirectory(prefix='kernelcabinet-safety-') as folder:
         work = Path(folder)
         binary = work/'kernelcabinet'
@@ -49,8 +50,9 @@ def main():
         for data in cases:
             case,_=run(data,2)
             assert not (case/'kernelcabinet-index-0.bin').exists()
-        for selection in [b'-1\n',b'1\n',b'0tail\n',b'9'*90+b'\n',b'\n',b'9999999999999999999999999999999\n']:
-            run(valid,2,selection)
+        for selection in [b'-1\n',b'1\n',b'0tail\n',b'0\x00tail',b'9'*90+b'\n',b'\n',b'9999999999999999999999999999999\n']:
+            case,_=run(valid,2,selection)
+            assert not (case/'kernelcabinet-index-0.bin').exists()
         case,_=run(valid,0)
         output=case/'kernelcabinet-index-0.bin'
         assert output.read_bytes()==valid[0x4000:0x4300]
@@ -82,6 +84,49 @@ def main():
             done=subprocess.run([str(binary),str(path)],capture_output=True,timeout=5)
             assert done.returncode in (1,2)
             tested+=1
-    print(f'PASS: {tested} process cases with ASan/UBSan; input preserved and outputs exclusive.')
+        limited_binaries={}
+        for budget,expected in ((3,2),(4,2),(5,2),(6,0)):
+            limited=work/f'kernelcabinet-limited-{budget}'
+            subprocess.run(['clang','-std=c99','-Wall','-Wextra','-Werror','-O1',
+                            f'-DKC_MAX_AGGREGATE_COMMANDS={budget}',
+                            *map(str,sorted((ROOT/'Sources').glob('*.c'))),'-o',str(limited)],check=True)
+            limited_binaries[budget]=limited
+            case=work/f'budget-{budget}';case.mkdir()
+            image=case/'owned-image';image.write_bytes(valid)
+            done=subprocess.run([str(limited),str(image)],input=b'0\n',cwd=case,capture_output=True,timeout=5)
+            output=case/'kernelcabinet-index-0.bin'
+            assert done.returncode==expected,(budget,done.returncode,done.stderr)
+            if budget==4:
+                assert b'index:' not in done.stdout
+            if budget==5:
+                assert b'index:' in done.stdout
+            if expected==0:
+                assert output.read_bytes()==valid[0x4000:0x4300]
+            else:
+                assert not output.exists()
+            assert image.read_bytes()==valid
+            budget_tested+=1
+        two=review_extract_image(2,random.Random(20261002))
+        for budget,expected,listed in ((5,2,1),(6,2,2),(7,0,2)):
+            limited=limited_binaries.get(budget)
+            if limited is None:
+                limited=work/f'kernelcabinet-limited-{budget}'
+                subprocess.run(['clang','-std=c99','-Wall','-Wextra','-Werror','-O1',
+                                f'-DKC_MAX_AGGREGATE_COMMANDS={budget}',
+                                *map(str,sorted((ROOT/'Sources').glob('*.c'))),'-o',str(limited)],check=True)
+            case=work/f'two-budget-{budget}';case.mkdir()
+            image=case/'owned-image';image.write_bytes(two)
+            done=subprocess.run([str(limited),str(image)],input=b'0\n',cwd=case,capture_output=True,timeout=5)
+            output=case/'kernelcabinet-index-0.bin'
+            assert done.returncode==expected,(budget,done.returncode,done.stderr)
+            assert done.stdout.count(b'index:')==listed,(budget,done.stdout)
+            if expected==0:
+                assert output.read_bytes()==two[0x4000:0x4300]
+            else:
+                assert not output.exists()
+            assert image.read_bytes()==two
+            budget_tested+=1
+    print(f'PASS: {tested} ASan/UBSan process cases and {budget_tested} aggregate-budget cases; '
+          'input preserved and outputs exclusive.')
 
 if __name__=='__main__':main()
